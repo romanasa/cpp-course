@@ -187,6 +187,7 @@ mul_long_short:
                 push            rax
                 push            rdi
                 push            rcx
+		push		rsi
 
                 xor             rsi, rsi
 .loop:
@@ -200,6 +201,7 @@ mul_long_short:
                 dec             rcx
                 jnz             .loop
 
+		pop		rsi
                 pop             rcx
                 pop             rdi
                 pop             rax
