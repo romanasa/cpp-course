@@ -20,9 +20,9 @@ public:
 
     uint size() const;
 
-    uint operator[] (size_t ind) const;
+    uint operator[](size_t ind) const;
 
-    uint &operator[] (size_t ind);
+    uint &operator[](size_t ind);
 
     void pop_back();
 
@@ -34,9 +34,10 @@ public:
 
     void erase_begin(uint i);
 
-    friend bool operator== (my_vector const &a, my_vector const &b);
+    friend bool operator==(my_vector const &a, my_vector const &b);
 
     my_vector &operator=(my_vector const &other);
+
 private:
     union {
         std::shared_ptr<std::vector<uint>> big;
@@ -47,9 +48,9 @@ private:
 
     bool is_big() const;
 
-    void check_one();
+    void check_unique();
 };
 
-bool operator== (my_vector const &a, my_vector const&b);
+bool operator==(my_vector const &a, my_vector const &b);
 
 #endif //BIGINT_MY_VECTOR_H

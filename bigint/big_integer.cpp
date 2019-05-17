@@ -2,7 +2,6 @@
 
 #include <cstring>
 #include <vector>
-#include <stdexcept>
 
 const uint big_integer::log_base = 32;
 const uint big_integer::max_number = (uint) 1e9;
@@ -120,7 +119,7 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
         while (b.data[m - 1] == 0) {
             m--;
         }
-        uint f = (uint) ((big_integer::base + 1) / (b.data[m - 1] + 1));
+        uint f = (uint) ((big_integer::base) / (b.data[m - 1] + 1));
         a *= f, b *= f;
 
         size_t n = a.size();
@@ -413,7 +412,7 @@ size_t big_integer::size() const {
 }
 
 uint big_integer::trial(uint const &a, uint const &b, uint const &c) const {
-    ull res = (((ull) a << big_integer::log_base) + b) / c;
+    ull res = (((ull) a << big_integer::log_base) + b) / c + 1;
     if (res > big_integer::base - 1) {
         res = big_integer::base - 1;
     }
