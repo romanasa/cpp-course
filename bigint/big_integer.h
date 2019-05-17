@@ -2,15 +2,15 @@
 #define BIG_INTEGER_H
 
 #include <string>
-#include <vector>
 #include <functional>
+#include "my_vector.h"
 
 typedef unsigned int uint;
 typedef unsigned long long ull;
 
 struct big_integer {
 private:
-    std::vector<uint> data;
+    my_vector data;
 
     static const uint log_base;
     static const ull base;
@@ -93,7 +93,7 @@ public:
 
     friend bool operator>=(big_integer const &a, big_integer const &b);
 
-    friend std::pair<big_integer, uint> my_div(big_integer const &a, uint const &b);
+    friend std::pair<big_integer, uint> my_div(big_integer const &a, uint b);
 
     friend big_integer operator*(big_integer const &a, uint const &b);
 
@@ -133,7 +133,7 @@ bool operator<=(big_integer const &a, big_integer const &b);
 
 bool operator>=(big_integer const &a, big_integer const &b);
 
-std::pair<big_integer, uint> my_div(big_integer const &a, uint const &b);
+std::pair<big_integer, uint> my_div(big_integer const &a, uint b);
 
 big_integer operator*(big_integer const &a, uint const &b);
 

@@ -1,6 +1,7 @@
 #include "big_integer.h"
 
 #include <cstring>
+#include <vector>
 #include <stdexcept>
 
 const uint big_integer::log_base = 32;
@@ -25,23 +26,19 @@ void big_integer::shrink() {
     }
 }
 
-big_integer::big_integer() {
-    data.clear();
-}
+big_integer::big_integer() = default;
 
 big_integer::big_integer(big_integer const &other) {
     data = other.data;
 }
 
 big_integer::big_integer(int a) {
-    data.clear();
     if (a) {
         data.push_back((uint) a);
     }
 }
 
 big_integer::big_integer(uint a) {
-    data.clear();
     if (a) {
         data.push_back((uint) a);
     }
@@ -51,8 +48,6 @@ big_integer::big_integer(uint a) {
 }
 
 big_integer::big_integer(std::string const &str) {
-    data.clear();
-
     bool neg = (str[0] == '-');
     for (char c : str) {
         if (c != '-') {
@@ -64,19 +59,13 @@ big_integer::big_integer(std::string const &str) {
     }
 }
 
-big_integer::~big_integer() {
-    data.clear();
-}
+big_integer::~big_integer() = default;
 
 big_integer &big_integer::operator=(big_integer const &other) = default;
 
 big_integer &big_integer::operator+=(big_integer const &rhs) {
     size_t len = std::max(size(), rhs.size()) + 1;
-
-    data.reserve(len);
-    while (size() < len) {
-        data.push_back(null_value());
-    }
+    data.resize(len, null_value());
 
     bool carry = false;
     for (size_t i = 0; i < len; i++) {
@@ -171,10 +160,7 @@ big_integer &big_integer::operator%=(big_integer const &rhs) {
 
 big_integer &big_integer::apply_opperation(big_integer const &rhs, const std::function<uint(uint, uint)> &f) {
     size_t len = std::max(size(), rhs.size());
-    data.reserve(len);
-    while (size() < len) {
-        data.push_back(null_value());
-    }
+    data.resize(len, null_value());
     for (size_t i = 0; i < len; i++) {
         data[i] = f(data[i], i < rhs.size() ? rhs.data[i] : rhs.null_value());
     }
@@ -196,9 +182,9 @@ big_integer &big_integer::operator^=(big_integer const &rhs) {
 
 void big_integer::shift(int rhs) {
     if (rhs > 0) {
-        data.insert(data.begin(), rhs, 0);
+        data.insert_begin(rhs);
     } else {
-        data.erase(data.begin(), data.begin() - rhs);
+        data.erase_begin(-rhs);
     }
 }
 
@@ -260,8 +246,8 @@ big_integer big_integer::operator~() const {
     if (r.data.empty()) {
         r.data.push_back(0);
     }
-    for (uint &i : r.data) {
-        i = ~i;
+    for (size_t i = 0; i < r.data.size(); i++) {
+        r.data[i] = ~r.data[i];
     }
     r.shrink();
     return r;
@@ -382,7 +368,7 @@ big_integer operator*(big_integer const &a, uint const &b) {
     return res;
 }
 
-std::pair<big_integer, uint> my_div(big_integer const &a, uint const &b) {
+std::pair<big_integer, uint> my_div(big_integer const &a, uint b) {
     big_integer res = a;
     uint mod = 0;
     for (size_t i = res.size(); i > 0; i--) {
