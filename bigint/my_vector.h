@@ -39,10 +39,10 @@ public:
     my_vector &operator=(my_vector const &other);
 
 private:
-    union {
-        std::shared_ptr<std::vector<uint>> big;
-        uint small;
-    };
+    //union {
+    std::shared_ptr<std::vector<uint>> big;
+    uint small;
+    //};
 
     size_t len;
 

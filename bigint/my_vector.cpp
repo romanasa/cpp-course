@@ -1,5 +1,4 @@
 #include <memory>
-
 #include "my_vector.h"
 #include <cassert>
 
@@ -60,7 +59,8 @@ void my_vector::push_back(uint val) {
         check_unique();
         big->push_back(val);
     } else if (len > 0) {
-        new(&big) std::shared_ptr<std::vector<uint>>(new std::vector<uint>(1, small));
+        big = std::make_shared<std::vector<uint>>(1, small);
+        //new(&big) std::shared_ptr<std::vector<uint>>(new std::vector<uint>(1, small));
         big->push_back(val);
     } else {
         small = val;
@@ -80,7 +80,8 @@ void my_vector::resize(uint size, uint value) {
         }
     } else if (size > 1) {
         uint tmp = small;
-        new(&big) std::shared_ptr<std::vector<uint>>(new std::vector<uint>(size, value));
+        big = std::make_shared<std::vector<uint>>(size, value);
+        //new(&big) std::shared_ptr<std::vector<uint>>(new std::vector<uint>(size, value));
         if (size > 0) {
             big->operator[](0) = tmp;
         }
@@ -145,7 +146,8 @@ my_vector &my_vector::operator=(my_vector const &other) {
         big.reset();
     }
     if (other.is_big()) {
-        new(&big) std::shared_ptr<std::vector<uint>>(other.big);
+        //new(&big) std::shared_ptr<std::vector<uint>>(other.big);
+        big = other.big;
     } else {
         small = other.small;
     }
