@@ -5,8 +5,9 @@
 #include <functional>
 #include "my_vector.h"
 
-typedef unsigned int uint;
-typedef unsigned long long ull;
+
+typedef uint32_t uint;
+typedef uint64_t ull;
 
 struct big_integer {
 private:

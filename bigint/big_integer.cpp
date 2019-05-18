@@ -63,14 +63,17 @@ big_integer::~big_integer() = default;
 big_integer &big_integer::operator=(big_integer const &other) = default;
 
 big_integer &big_integer::operator+=(big_integer const &rhs) {
-    size_t len = std::max(size(), rhs.size()) + 1;
+    size_t len = std::max(size(), rhs.size()) + 2;
     data.resize(len, null_value());
+
+    uint* cur_data = data.data();
+    const uint* rhs_data = rhs.data.data();
 
     bool carry = false;
     for (size_t i = 0; i < len; i++) {
-        uint digit = i < rhs.size() ? rhs.data[i] : rhs.null_value();
-        bool ncarry = ((ull) data[i] + digit + carry) >= base;
-        data[i] += digit + carry;
+        uint digit = i < rhs.size() ? rhs_data[i] : rhs.null_value();
+        bool ncarry = ((ull) cur_data[i] + digit + carry) >= base;
+        cur_data[i] += digit + carry;
         carry = ncarry;
     }
     shrink();
@@ -90,8 +93,9 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
     if (b.negative()) {
         b = -b;
     }
+    uint* const b_data = b.data.data();
     for (size_t i = 0; i < b.size(); i++) {
-        res += (a * b.data[i]) << (i * log_base);
+        res += (a * b_data[i]) << (i * log_base);
     }
     if (negative() ^ rhs.negative()) {
         res = -res;
@@ -245,8 +249,9 @@ big_integer big_integer::operator~() const {
     if (r.data.empty()) {
         r.data.push_back(0);
     }
+    uint* r_data = r.data.data();
     for (size_t i = 0; i < r.data.size(); i++) {
-        r.data[i] = ~r.data[i];
+        r_data[i] = ~r_data[i];
     }
     r.shrink();
     return r;
@@ -355,9 +360,12 @@ big_integer operator*(big_integer const &a, uint const &b) {
     }
     res.data.push_back(0);
     uint carry = 0;
+
+    uint* res_data = res.data.data();
+
     for (size_t i = 0; i < res.size(); i++) {
-        ull cur = (ull) res.data[i] * b + carry;
-        res.data[i] = (uint) (cur & (big_integer::base - 1));
+        ull cur = (ull) res_data[i] * b + carry;
+        res_data[i] = (uint) (cur & (big_integer::base - 1));
         carry = (uint) (cur >> big_integer::log_base);
     }
     if (neg) {

@@ -154,3 +154,18 @@ my_vector &my_vector::operator=(my_vector const &other) {
     len = other.len;
     return *this;
 }
+
+uint *my_vector::data() {
+    if (is_big()) {
+        check_unique();
+        return big->data();
+    }
+    return &small;
+}
+
+uint* const my_vector::data() const {
+    if (is_big()) {
+        return big->data();
+    }
+    return const_cast<uint*>(&small);
+}

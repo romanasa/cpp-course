@@ -24,6 +24,10 @@ public:
 
     uint &operator[](size_t ind);
 
+    uint* data();
+
+    uint* const data() const;
+
     void pop_back();
 
     void push_back(uint val);
@@ -33,6 +37,8 @@ public:
     void insert_begin(uint cnt);
 
     void erase_begin(uint i);
+
+
 
     friend bool operator==(my_vector const &a, my_vector const &b);
 
