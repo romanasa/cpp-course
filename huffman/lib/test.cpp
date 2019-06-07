@@ -38,11 +38,14 @@ TEST(correctness, all_chars) {
     EXPECT_EQ(in.str(), out.str());
 }
 
-TEST(correctness, big_text) {
+static const int MAXLEN = 10 * 1024 * 1024;
+
+TEST(correctness, big_text)
+{
     std::stringstream in, code, out;
 
     std::mt19937 rnd(1);
-    for (int i = 0; i < 10 * 1024 * 1024; i++) {
+    for (int i = 0; i < MAXLEN; i++) {
         in << (char)rnd() % 256;
     }
     huffman::compress(in, code);
@@ -60,7 +63,7 @@ TEST(correctness, one_char_text) {
     std::stringstream in, code, out;
 
     std::mt19937 rnd(1);
-    for (int i = 0; i < 10 * 1024 * 1024; i++) {
+    for (int i = 0; i < MAXLEN; i++) {
         in << 'a';
     }
     huffman::compress(in, code);
@@ -73,7 +76,7 @@ TEST(correctness, two_chars_text) {
     std::stringstream in, code, out;
 
     std::mt19937 rnd(1);
-    for (int i = 0; i < 10 * 1024 * 1024; i++) {
+    for (int i = 0; i < MAXLEN; i++) {
         in << (char)('a' + rnd() % 2);
     }
     huffman::compress(in, code);
@@ -86,7 +89,7 @@ TEST(correctness, compress_compressed) {
     std::stringstream in, code1, code2, out2, out;
 
     std::mt19937 rnd(1);
-    for (int i = 0; i < 10 * 1024 * 1024; i++) {
+    for (int i = 0; i < MAXLEN; i++) {
         in << (char)(rnd() % 256);
     }
     huffman::compress(in, code1);
