@@ -10,7 +10,6 @@ typedef uint64_t ull;
 
 class trie {
 public:
-    trie();
     explicit trie(const std::vector<std::pair<char, ull>>& codes);
 
     bool step(uint c);

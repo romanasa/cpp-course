@@ -26,7 +26,7 @@ bool trie::step(uint c) {
 }
 
 bool trie::end() const {
-    return v->L == nullptr && v->R == nullptr;
+    return !v->L;
 }
 
 unsigned char trie::get() const {
