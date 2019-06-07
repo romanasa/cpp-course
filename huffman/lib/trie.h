@@ -21,7 +21,6 @@ private:
     struct node {
         node *L = nullptr, *R = nullptr;
         unsigned char val = 0;
-        node() = default;
     };
     node *root = new node();
     node *v = root;

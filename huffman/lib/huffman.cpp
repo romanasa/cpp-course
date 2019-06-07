@@ -111,8 +111,7 @@ bool huffman::decompress(std::istream &in, std::ostream &out) {
     while ((cur_size = in.readsome((char *) buffer, buff_size)) > 0) {
         for (size_t j = 0; j < cur_size; j++) {
             for (uint bit = 0; bit < std::min<ull>(8, len_stream); bit++) {
-                char c = (buffer[j] >> bit) & 1u;
-                if (code_trie.step(c)) {
+                if (code_trie.step((buffer[j] >> bit) & 1u)) {
                     if (code_trie.end()) {
                         write(code_trie.get());
                         code_trie.init();
