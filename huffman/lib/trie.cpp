@@ -8,7 +8,6 @@ trie::trie() {
 void trie::add_node() {
     go.emplace_back(2, -1);
     val.push_back(0);
-    term.push_back(false);
 }
 
 trie::trie(const std::vector<std::pair<char, ull>>& codes) {
@@ -31,21 +30,19 @@ void trie::insert(unsigned char len, ull code, unsigned char symbol) {
         vert = go[vert][cur];
     }
     val[vert] = symbol;
-    term[vert] = true;
 }
 
 bool trie::step(uint c) {
-    if (c != 0 && c != 1) return false;
-    if (!was && go[v][c] != -1) {
-        v = go[v][c];
+    uint &cur = go[v][c];
+    if (cur != -1) {
+        v = cur;
         return true;
     }
-    was = true;
-    return c == 0;
+    return false;
 }
 
 bool trie::end() const {
-    return term[v];
+    return go[v][0] == -1 && go[v][1] == -1;
 }
 
 unsigned char trie::get() const {
