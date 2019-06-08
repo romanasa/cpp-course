@@ -16,8 +16,9 @@ public:
     bool end() const;
     unsigned char get() const;
     void init();
-private:
+    ~trie();
 
+private:
     struct node {
         node *L = nullptr, *R = nullptr;
         unsigned char val = 0;
@@ -25,6 +26,8 @@ private:
     node *root = new node();
     node *v = root;
     void insert(unsigned char len, ull code, unsigned char symbol);
+
+    std::vector<node*> verts;
 };
 
 

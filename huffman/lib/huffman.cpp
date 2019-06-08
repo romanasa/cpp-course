@@ -123,7 +123,6 @@ bool huffman::decompress(std::istream &in, std::ostream &out) {
             len_stream = (len_stream >= 8 ? len_stream - 8 : 0);
         }
     }
-
     if (buff_ind) {
         out.write((char *) out_buffer, buff_ind);
     }

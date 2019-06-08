@@ -13,7 +13,8 @@ void trie::insert(unsigned char len, ull code, unsigned char symbol) {
         uint cur = (code >> (len - i - 1u)) & 1u;
         node *son = (cur ? vert->R : vert->L);
         if (!son) {
-            son = (cur ? vert->R : vert->L) = new node();
+            verts.push_back(new node());
+            son = (cur ? vert->R : vert->L) = verts.back();
         }
         vert = son;
     }
@@ -35,4 +36,11 @@ unsigned char trie::get() const {
 
 void trie::init() {
     v = root;
+}
+
+trie::~trie() {
+    delete root;
+    for (auto c : verts) {
+        delete c;
+    }
 }
