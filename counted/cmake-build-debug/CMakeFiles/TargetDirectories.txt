@@ -1,3 +1,0 @@
-C:/Users/roman/4me/itmo/cpp-course/counted/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-C:/Users/roman/4me/itmo/cpp-course/counted/cmake-build-debug/CMakeFiles/vector_testing.dir
-C:/Users/roman/4me/itmo/cpp-course/counted/cmake-build-debug/CMakeFiles/edit_cache.dir
