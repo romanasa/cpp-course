@@ -601,6 +601,7 @@ void vector<T>::unique() {
 
         size_t cur_len = curadd + sizeof(T) * capacity();
         char *ncdata = new char[cur_len];
+        new(ncdata) size_t(capacity());
         T *ntdata = reinterpret_cast<T *>(ncdata + curadd);
 
         for (size_t i = 0; i != size(); i++) {
