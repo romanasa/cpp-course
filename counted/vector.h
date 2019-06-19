@@ -323,7 +323,7 @@ void vector<T>::shrink_to_fit() {
         size_ = cur_size;
 
         new(cur_cdata) size_t(size_);
-        pointer = new(cur_cdata + sizeof(size_t)) shared_ptr<char>(cur_cdata);
+        pointer = new(cur_cdata + sizeof(size_t)) shared_ptr<char>(cur_cdata, deleter<char>());
     }
 }
 
@@ -431,7 +431,7 @@ void vector<T>::reserve(size_t len) {
         size_ = cur_size;
 
         new(cur_cdata) size_t(new_len);
-        pointer = new(cur_cdata + sizeof(size_t)) shared_ptr<char>(cur_cdata);
+        pointer = new(cur_cdata + sizeof(size_t)) shared_ptr<char>(cur_cdata, deleter<char>());
     }
 }
 
