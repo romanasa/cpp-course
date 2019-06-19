@@ -49,37 +49,37 @@ public:
 
     T &operator[](size_t i);
 
-    const T &operator[](size_t i) const;
+    const T &operator[](size_t i) const noexcept;
 
     T &front();
 
-    const T &front() const;
+    const T &front() const noexcept;
 
     T &back();
 
-    const T &back() const;
+    const T &back() const noexcept;
 
     void push_back(const T &value);
 
-    void pop_back() noexcept;
+    void pop_back();
 
     T *data();
 
-    const T *data() const;
+    const T *data() const noexcept;
 
-    iterator begin() const;
+    iterator begin() const noexcept;
 
-    iterator end() const;
+    iterator end() const noexcept;
 
-    reverse_iterator rbegin() const;
+    reverse_iterator rbegin() const noexcept;
 
-    reverse_iterator rend() const;
+    reverse_iterator rend() const noexcept;
 
-    bool empty() const;
+    bool empty() const noexcept;
 
     void reserve(size_t len);
 
-    size_t capacity() const;
+    size_t capacity() const noexcept;
 
     void shrink_to_fit();
 
@@ -98,25 +98,25 @@ public:
     iterator erase(const_iterator first, const_iterator last);
 
     template<typename Y>
-    friend void swap(vector<Y> &a, vector<Y> &b);
+    friend void swap(vector<Y> &a, vector<Y> &b) noexcept;
 
     template<typename Y>
-    friend bool operator==(const vector<Y> &a, const vector<Y> &b);
+    friend bool operator==(const vector<Y> &a, const vector<Y> &b) noexcept;
 
     template<typename Y>
-    friend bool operator!=(const vector<Y> &a, const vector<Y> &b);
+    friend bool operator!=(const vector<Y> &a, const vector<Y> &b) noexcept;
 
     template<typename Y>
-    friend bool operator<(const vector<Y> &a, const vector<Y> &b);
+    friend bool operator<(const vector<Y> &a, const vector<Y> &b) noexcept;
 
     template<typename Y>
-    friend bool operator<=(const vector<Y> &a, const vector<Y> &b);
+    friend bool operator<=(const vector<Y> &a, const vector<Y> &b) noexcept;
 
     template<typename Y>
-    friend bool operator>(const vector<Y> &a, const vector<Y> &b);
+    friend bool operator>(const vector<Y> &a, const vector<Y> &b) noexcept;
 
     template<typename Y>
-    friend bool operator>=(const vector<Y> &a, const vector<Y> &b);
+    friend bool operator>=(const vector<Y> &a, const vector<Y> &b) noexcept;
 
 private:
     static const size_t curadd = sizeof(size_t) + sizeof(shared_ptr<T>);
@@ -128,11 +128,11 @@ private:
         shared_ptr<char> *pointer;
     };
 
-    bool is_big() const;
+    bool is_big() const noexcept;
 
-    char *cdata() const;
+    char *cdata() const noexcept;
 
-    T *tdata() const;
+    T *tdata() const noexcept;
 
     void unique();
 };
@@ -269,12 +269,12 @@ void vector<T>::swap(vector &other) {
 }
 
 template<typename T>
-bool vector<T>::is_big() const {
+bool vector<T>::is_big() const noexcept {
     return size_ > 1;
 }
 
 template<typename T>
-size_t vector<T>::capacity() const {
+size_t vector<T>::capacity() const noexcept {
     if (is_big()) {
         return *reinterpret_cast<size_t *>(cdata());
     }
@@ -282,7 +282,7 @@ size_t vector<T>::capacity() const {
 }
 
 template<typename T>
-const T &vector<T>::operator[](size_t i) const {
+const T &vector<T>::operator[](size_t i) const noexcept {
     if (is_big()) {
         return tdata()[i];
     }
@@ -343,7 +343,7 @@ T &vector<T>::front() {
 }
 
 template<typename T>
-const T &vector<T>::front() const {
+const T &vector<T>::front() const noexcept {
     if (is_big()) {
         return operator[](0);
     }
@@ -361,7 +361,7 @@ T &vector<T>::back() {
 }
 
 template<typename T>
-const T &vector<T>::back() const {
+const T &vector<T>::back() const noexcept {
     if (is_big()) {
         return operator[](size_ - 1);
     }
@@ -369,7 +369,7 @@ const T &vector<T>::back() const {
 }
 
 template<typename T>
-void vector<T>::pop_back() noexcept {
+void vector<T>::pop_back() {
     if (is_big()) {
         unique();
         tdata()[size_ - 1].~T();
@@ -394,7 +394,7 @@ T *vector<T>::data() {
 }
 
 template<typename T>
-const T *vector<T>::data() const {
+const T *vector<T>::data() const noexcept {
     if (is_big()) {
         return tdata();
     }
@@ -402,7 +402,7 @@ const T *vector<T>::data() const {
 }
 
 template<typename T>
-bool vector<T>::empty() const {
+bool vector<T>::empty() const noexcept {
     return size_ == 0;
 }
 
@@ -436,18 +436,18 @@ void vector<T>::reserve(size_t len) {
 }
 
 template<typename T>
-bool operator==(const vector<T> &a, const vector<T> &b) {
+bool operator==(const vector<T> &a, const vector<T> &b) noexcept {
     if (a.size() != b.size()) return false;
     return memcmp(a.data(), b.data(), sizeof(T) * a.size()) == 0;
 }
 
 template<typename T>
-bool operator!=(const vector<T> &a, const vector<T> &b) {
+bool operator!=(const vector<T> &a, const vector<T> &b) noexcept {
     return !(a == b);
 }
 
 template<typename T>
-bool operator<(const vector<T> &a, const vector<T> &b) {
+bool operator<(const vector<T> &a, const vector<T> &b) noexcept {
     size_t cur_len = (a.size() < b.size() ? a.size() : b.size());
     for (size_t i = 0; i != cur_len; i++) {
         if (a[i] != b[i]) {
@@ -458,38 +458,38 @@ bool operator<(const vector<T> &a, const vector<T> &b) {
 }
 
 template<typename T>
-bool operator>(const vector<T> &a, const vector<T> &b) {
+bool operator>(const vector<T> &a, const vector<T> &b) noexcept {
     return (b < a);
 }
 
 template<typename T>
-bool operator<=(const vector<T> &a, const vector<T> &b) {
+bool operator<=(const vector<T> &a, const vector<T> &b) noexcept {
     return !(a > b);
 }
 
 template<typename T>
-bool operator>=(const vector<T> &a, const vector<T> &b) {
+bool operator>=(const vector<T> &a, const vector<T> &b) noexcept {
     return !(a < b);
 }
 
 template<typename T>
-typename vector<T>::iterator vector<T>::begin() const {
+typename vector<T>::iterator vector<T>::begin() const noexcept {
     return const_cast<iterator>(data());
 }
 
 template<typename T>
-typename vector<T>::iterator vector<T>::end() const {
+typename vector<T>::iterator vector<T>::end() const noexcept {
     return const_cast<iterator>(data() + size_);
 }
 
 
 template<typename T>
-typename vector<T>::reverse_iterator vector<T>::rbegin() const {
+typename vector<T>::reverse_iterator vector<T>::rbegin() const noexcept {
     return std::make_reverse_iterator(end());
 }
 
 template<typename T>
-typename vector<T>::reverse_iterator vector<T>::rend() const {
+typename vector<T>::reverse_iterator vector<T>::rend() const noexcept {
     return std::make_reverse_iterator(begin());
 }
 
@@ -586,12 +586,12 @@ typename vector<T>::iterator vector<T>::erase(vector::const_iterator first, vect
 }
 
 template<typename T>
-char *vector<T>::cdata() const {
+char *vector<T>::cdata() const noexcept {
     return big.get();
 }
 
 template<typename T>
-T *vector<T>::tdata() const {
+T *vector<T>::tdata() const noexcept {
     return reinterpret_cast<T *>(cdata() + curadd);
 }
 
@@ -615,4 +615,3 @@ void vector<T>::unique() {
 
 
 #endif //VECTOR_H
-
