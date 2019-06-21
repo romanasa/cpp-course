@@ -12,7 +12,7 @@ namespace
 }
 
 counted::counted(int data)
-    : data(transcode(data, this))
+        : data(transcode(data, this))
 {
     fault_injection_point();
     fault_injection_disable fd;
@@ -62,7 +62,7 @@ counted::operator int() const
 std::set<counted const*> counted::instances;
 
 counted::no_new_instances_guard::no_new_instances_guard()
-    : old_instances(instances)
+        : old_instances(instances)
 {}
 
 counted::no_new_instances_guard::~no_new_instances_guard()

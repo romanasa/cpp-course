@@ -10,6 +10,8 @@
 
 using std::shared_ptr;
 
+#define align(x) (((x) + sizeof(size_t) - 1) / sizeof(size_t) * sizeof(size_t))
+
 template<typename T>
 struct deleter {
     void operator()(T const *p) {
@@ -27,7 +29,7 @@ public:
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    vector() : size_(0), pointer(nullptr) {}
+    vector();
 
     ~vector();
 
@@ -98,7 +100,7 @@ public:
     iterator erase(const_iterator first, const_iterator last);
 
     template<typename Y>
-    friend void swap(vector<Y> &a, vector<Y> &b) noexcept;
+    friend void swap(vector<Y> &a, vector<Y> &b);
 
     template<typename Y>
     friend bool operator==(const vector<Y> &a, const vector<Y> &b) noexcept;
@@ -118,17 +120,25 @@ public:
     template<typename Y>
     friend bool operator>=(const vector<Y> &a, const vector<Y> &b) noexcept;
 
-private:
-    static const size_t curadd = sizeof(size_t) + sizeof(shared_ptr<T>);
+    bool is_big() const noexcept;
 
-    size_t size_ = 0;
+    void erase_begin(uint cnt);
+
+    void insert_begin(uint cnt);
+
+private:
+    static const size_t curadd = align(sizeof(size_t) + sizeof(shared_ptr<T>));
+    static const size_t cursz = sizeof(size_t) + sizeof(bool);
+
+    //size_t size_ = 0;
+
+    char *psize_ = nullptr;
 
     union {
         T element;
         shared_ptr<char> *pointer;
     };
 
-    bool is_big() const noexcept;
 
     char *cdata() const noexcept;
 
@@ -136,7 +146,6 @@ private:
 
     void unique();
 };
-
 
 template<typename T>
 void swap(vector<T> &A, vector<T> &B) {
@@ -147,55 +156,60 @@ void swap(vector<T> &A, vector<T> &B) {
 #define small (element)
 
 template<typename T>
-vector<T>::vector(vector const &other): size_(other.size_) {
+vector<T>::vector(vector const &other): pointer(nullptr) {
     if (other.is_big()) {
-        char *cdata = new char[curadd];
-        new(cdata) size_t(size_);
+        char *cdata = new char[curadd + cursz];
+        new(cdata) size_t(other.size());
         pointer = new(cdata + sizeof(size_t)) shared_ptr<char>(*other.pointer);
-    } else if (other.size_) {
-        new(&element) T(other.element);
+        psize_ = cdata + curadd;
+    } else {
+        psize_ = new char[cursz];
+        if (other.size()) {
+            try {
+                new(&element) T(other.element);
+            } catch (std::exception const &e) {
+                delete[] psize_;
+                throw e;
+            }
+        }
     }
+    new(psize_) size_t(other.size());
+    new(psize_ + sizeof(size_t)) bool(other.is_big());
 }
 
 template<typename T>
-vector<T>::vector(vector &&other) noexcept {
+vector<T>::vector(): pointer(nullptr) {
+    psize_ = new char[cursz];
+    new(psize_) size_t(0);
+    new(psize_ + sizeof(size_t)) bool(false);
+}
+
+template<typename T>
+vector<T>::vector(vector &&other) noexcept: psize_(nullptr), pointer(nullptr) {
     swap(other);
 }
 
 template<typename T>
-vector<T>::vector(size_t size, const T &value): size_(size) {
-    if (size == 1) {
-        new(&element) T(value);
-    } else if (size > 1) {
-
-        char *cdata = new char[curadd + size_ * sizeof(T)];
-        T *tdata = (T *) (cdata + curadd);
-
-        for (size_t i = 0; i != size; i++) {
-            new(tdata + i) T(value);
-        }
-        new(cdata) size_t(size);
-        pointer = new(cdata + sizeof(size_t)) shared_ptr<char>(cdata, deleter<char>());
-    }
-}
-
-
-template<typename T>
 vector<T>::~vector() {
     if (is_big()) {
-        for (size_t i = 0; i < size(); i++) {
-            tdata()[i].~T();
+        if (big.use_count() == 1) {
+            for (size_t i = 0; i < size(); i++) {
+                tdata()[i].~T();
+            }
         }
         big.~shared_ptr();
-    } else if (size() == 1) {
-        small.~T();
+    } else {
+        if (size() == 1) {
+            small.~T();
+        }
+        delete[] psize_;
     }
 }
 
 
 template<typename T>
 template<typename InputIterator>
-vector<T>::vector(InputIterator first, InputIterator last) {
+vector<T>::vector(InputIterator first, InputIterator last): vector() {
     while (first != last) {
         push_back(*first);
         ++first;
@@ -241,11 +255,10 @@ void vector<T>::swap(vector &other) {
         }
     } else if (size()) {
         if (other.is_big()) {
-            T tmp(element);
+            auto tmp = other.pointer;
+            new(&other.element) T(element);
             element.~T();
-
-            pointer = other.pointer;
-            new(&other.element) T(tmp);
+            pointer = tmp;
         } else if (other.size()) {
             std::swap(element, other.element);
         } else {
@@ -265,12 +278,12 @@ void vector<T>::swap(vector &other) {
 
         }
     }
-    std::swap(size_, other.size_);
+    std::swap(psize_, other.psize_);
 }
 
 template<typename T>
 bool vector<T>::is_big() const noexcept {
-    return size_ > 1;
+    return *reinterpret_cast<bool *>(psize_ + sizeof(size_t));
 }
 
 template<typename T>
@@ -300,31 +313,12 @@ T &vector<T>::operator[](size_t i) {
 
 template<typename T>
 void vector<T>::clear() {
-    size_ = 0;
+    new(psize_) size_t(0);
 }
 
 template<typename T>
 void vector<T>::shrink_to_fit() {
-    if (is_big()) {
-        unique();
-        bool need = is_big();
-        size_t cur_size = size();
-
-        char *cur_cdata = new char[curadd + sizeof(T) * cur_size];
-        T *cur_tdata = reinterpret_cast<T *>(cur_cdata + curadd);
-
-        for (size_t i = 0; i != cur_size; i++) {
-            new(cur_tdata + i) T(operator[](i));
-        }
-
-        if (need) {
-            vector().swap(*this);
-        }
-        size_ = cur_size;
-
-        new(cur_cdata) size_t(size_);
-        pointer = new(cur_cdata + sizeof(size_t)) shared_ptr<char>(cur_cdata, deleter<char>());
-    }
+    reserve(size());
 }
 
 template<typename T>
@@ -355,7 +349,7 @@ template<typename T>
 T &vector<T>::back() {
     if (is_big()) {
         unique();
-        return operator[](size_ - 1);
+        return operator[](size() - 1);
     }
     return small;
 }
@@ -363,7 +357,7 @@ T &vector<T>::back() {
 template<typename T>
 const T &vector<T>::back() const noexcept {
     if (is_big()) {
-        return operator[](size_ - 1);
+        return operator[](size() - 1);
     }
     return small;
 }
@@ -372,16 +366,13 @@ template<typename T>
 void vector<T>::pop_back() {
     if (is_big()) {
         unique();
-        tdata()[size_ - 1].~T();
+        tdata()[size() - 1].~T();
     } else {
         element.~T();
     }
-    if (size_ == 2) {
-        auto tmp = front();
-        tdata()[0].~T();
-        new(&element) T(tmp);
-    }
-    size_--;
+
+    auto nsize = size() - 1;
+    new(psize_) size_t(nsize);
 }
 
 template<typename T>
@@ -403,36 +394,7 @@ const T *vector<T>::data() const noexcept {
 
 template<typename T>
 bool vector<T>::empty() const noexcept {
-    return size_ == 0;
-}
-
-template<typename T>
-void vector<T>::reserve(size_t len) {
-    if (len > 1) {
-        if (is_big()) {
-            unique();
-        }
-        bool need = is_big();
-        size_t cur_size = size();
-        size_t new_len = std::max(len, cur_size);
-
-        char *cur_cdata = new char[curadd + sizeof(T) * new_len];
-        T *cur_tdata = reinterpret_cast<T *>(cur_cdata + curadd);
-
-        for (size_t i = 0; i != cur_size; i++) {
-            new(cur_tdata + i) T(operator[](i));
-        }
-
-        if (need) {
-            vector().swap(*this);
-        } else if (size_) {
-            small.~T();
-        }
-        size_ = cur_size;
-
-        new(cur_cdata) size_t(new_len);
-        pointer = new(cur_cdata + sizeof(size_t)) shared_ptr<char>(cur_cdata, deleter<char>());
-    }
+    return size() == 0;
 }
 
 template<typename T>
@@ -479,7 +441,7 @@ typename vector<T>::iterator vector<T>::begin() const noexcept {
 
 template<typename T>
 typename vector<T>::iterator vector<T>::end() const noexcept {
-    return const_cast<iterator>(data() + size_);
+    return const_cast<iterator>(data() + size());
 }
 
 
@@ -499,6 +461,20 @@ void vector<T>::resize(size_t len, const T &value) {
     if (is_big()) {
         unique();
     }
+
+    if (len <= size()) {
+        while (size() > len) {
+            pop_back();
+        }
+        return;
+    }
+    if (len <= capacity()) {
+        while (size() < len) {
+            push_back(value);
+        }
+        return;
+    }
+
     vector cur(len, value);
     for (size_t i = 0; i != size() && i != cur.size(); i++) {
         cur[i] = operator[](i);
@@ -510,32 +486,50 @@ template<typename T>
 void vector<T>::push_back(const T &value) {
     if (is_big()) {
         unique();
-    }
-    if (size_ == 0) {
-        new(&element) T(value);
-    } else {
-        if (size_ == 1 || size_ == capacity()) {
+        if (size() == capacity()) {
             auto tmp = value;
-            reserve(2 * size_);
-            new(tdata() + size_) T(tmp);
+            reserve(2 * size());
+            try {
+                new(tdata() + size()) T(tmp);
+            } catch (std::exception const &e) {
+                throw e;
+            }
         } else {
-            new(tdata() + size_) T(value);
+            new(tdata() + size()) T(value);
+        }
+    } else {
+        if (size() == 0) {
+            try {
+                new(&element) T(value);
+            } catch (std::exception const &e) {
+                throw e;
+            }
+        } else {
+            auto tmp = value;
+            reserve(2 * size());
+            try {
+                new(tdata() + size()) T(tmp);
+            } catch (std::exception const &e) {
+                throw e;
+            }
         }
     }
-    size_++;
+
+    auto nsize = size() + 1;
+    new(psize_) size_t(nsize);
 }
 
 template<typename T>
 size_t vector<T>::size() const noexcept {
-    return size_;
+    return *reinterpret_cast<size_t *>(psize_);
 }
 
 template<typename T>
 typename vector<T>::iterator vector<T>::insert(vector::const_iterator pos, const T &val) {
-    if (size_ == 1) {
+    if (size() == 1) {
         push_back(val);
         return begin();
-    } else if (size_ == capacity()) {
+    } else if (size() == capacity()) {
         auto dist = pos - begin();
         push_back(val);
         pos = begin() + dist;
@@ -575,8 +569,22 @@ typename vector<T>::iterator vector<T>::erase(vector::const_iterator first, vect
     auto f = const_cast<iterator>(first);
     auto l = const_cast<iterator>(last);
     size_t cnt = 0;
+
+    if (l == end()) {
+        auto tmp(*this);
+        while (tmp.size() > (size_t)(f - begin())) {
+            tmp.pop_back();
+        }
+        *this = std::move(tmp);
+        return f;
+    }
+
     for (; l != end(); ++f, ++l) {
-        *f = *l;
+        try {
+            *f = *l;
+        } catch (std::exception const &e) {
+            throw e;
+        }
         cnt++;
     }
 
@@ -595,24 +603,176 @@ T *vector<T>::tdata() const noexcept {
     return reinterpret_cast<T *>(cdata() + curadd);
 }
 
+
 template<typename T>
-void vector<T>::unique() {
-    if (!(*pointer).unique()) {
+void vector<T>::reserve(size_t len) {
+    if (len > 1) {
+        if (is_big()) {
+            unique();
+        }
+        bool need = is_big();
+        size_t cur_size = size(), new_len = std::max(len, cur_size);
 
-        size_t cur_len = curadd + sizeof(T) * capacity();
-        char *ncdata = new char[cur_len];
-        new(ncdata) size_t(capacity());
-        T *ntdata = reinterpret_cast<T *>(ncdata + curadd);
+        char *cur_cdata = new char[align(curadd + sizeof(T) * new_len) + cursz];
+        T *cur_tdata = reinterpret_cast<T *>(cur_cdata + curadd);
 
-        for (size_t i = 0; i != size(); i++) {
-            const T &tmp = *(tdata() + i);
-            new(ntdata + i) T(tmp);
+        new(cur_cdata) size_t(new_len);
+        shared_ptr<char> *cur_pointer = nullptr;
+        try {
+            cur_pointer = new(cur_cdata + sizeof(size_t)) shared_ptr<char>(cur_cdata, deleter<char>());
+        } catch (std::exception const &e) {
+            //delete[] cur_cdata;  // clear in shared_prt destructor
+            throw e;
         }
 
-        (*pointer).~shared_ptr();
-        pointer = new(ncdata + sizeof(size_t)) shared_ptr<char>(ncdata, deleter<char>());
+        for (size_t i = 0; i != cur_size; i++) {
+            try {
+                new(cur_tdata + i) T(operator[](i));
+            } catch (std::exception const &e) {
+                for (size_t j = 0; j != i; j++) {
+                    cur_tdata[j].~T();
+                }
+                delete[] cur_cdata;
+                throw e;
+            }
+        }
+
+        if (need) {
+            try {
+                vector().swap(*this);
+            } catch (std::exception const &e) {
+                for (size_t j = 0; j != cur_size; j++) {
+                    cur_tdata[j].~T();
+                }
+                delete[] cur_cdata;
+                throw e;
+            }
+        } else {
+            if (size()) {
+                small.~T();
+            }
+        }
+        pointer = cur_pointer;
+
+        delete[] psize_;
+
+        psize_ = cur_cdata + align(curadd + sizeof(T) * new_len);
+        new(psize_) size_t(cur_size);
+        new(psize_ + sizeof(size_t)) bool(true);
     }
 }
 
+
+template<typename T>
+void vector<T>::unique() {
+    if (!(*pointer).unique()) {
+        size_t cur_len = align(curadd + sizeof(T) * capacity());
+        size_t old_len = size();
+
+        char *ncdata = new char[cur_len + cursz];
+        T *ntdata = reinterpret_cast<T *>(ncdata + curadd);
+
+        new(ncdata) size_t(capacity());
+
+        shared_ptr<char> *cur_pointer = nullptr;
+        try {
+            cur_pointer = new(ncdata + sizeof(size_t)) shared_ptr<char>(ncdata, deleter<char>());
+        } catch (std::exception const &e) {
+            // delete[] ncdata;
+            throw e;
+        }
+
+        for (size_t i = 0; i != size(); i++) {
+            const T &tmp = *(tdata() + i);
+            try {
+                new(ntdata + i) T(tmp);
+            } catch (std::exception const &e) {
+                for (size_t j = 0; j != i; j++) {
+                    ntdata[j].~T();
+                }
+                delete[] ncdata;
+                throw e;
+            }
+        }
+
+        (*pointer).~shared_ptr();
+        delete[] (reinterpret_cast<char *>(pointer) - sizeof(size_t));
+        pointer = cur_pointer;
+
+        psize_ = ncdata + cur_len;
+        new(psize_) size_t(old_len);
+        new(psize_ + sizeof(size_t)) bool(true);
+    }
+}
+
+
+template<typename T>
+vector<T>::vector(size_t size, const T &value): pointer(nullptr) {
+    if (size <= 1) {
+        psize_ = new char[cursz];
+        if (size == 1) {
+            try {
+                new(&element) T(value);
+            } catch (std::exception const &e) {
+                delete[] psize_;
+                throw e;
+            }
+        }
+    } else {
+        char *cdata = new char[align(curadd + size * sizeof(T)) + cursz];
+        T *tdata = (T *) (cdata + curadd);
+
+        try {
+            pointer = new(cdata + sizeof(size_t)) shared_ptr<char>(cdata, deleter<char>());
+        } catch (std::exception const &e) {
+            //delete[] cdata;
+            throw e;
+        }
+
+        for (size_t i = 0; i != size; i++) {
+            try {
+                new(tdata + i) T(value);
+            } catch (std::exception const &e) {
+                for (size_t j = 0; j != i; j++) {
+                    tdata[j].~T();
+                }
+                delete[] cdata;
+                pointer = nullptr;
+                throw e;
+            }
+        }
+        new(cdata) size_t(size);
+        psize_ = cdata + align(curadd + size * sizeof(T));
+    }
+    new(psize_) size_t(size);
+    new(psize_ + sizeof(size_t)) bool(size > 1);
+}
+
+
+template<typename T>
+void vector<T>::erase_begin(uint cnt) {
+    unique();
+    for (size_t i = 0; i < size() - cnt; i++) {
+        operator[](i) = operator[](i + cnt);
+    }
+    while (cnt--) {
+        pop_back();
+    }
+}
+
+template<typename T>
+void vector<T>::insert_begin(uint cnt) {
+    resize(size() + cnt, front());
+    if (is_big()) {
+        for (size_t i = size() - 1; i >= cnt; i--) {
+            operator[](i) = operator[](i - cnt);
+        }
+        for (size_t i = 0; i < cnt; i++) {
+            operator[](i) = 0;
+        }
+    } else {
+        small = 0;
+    }
+}
 
 #endif //VECTOR_H
