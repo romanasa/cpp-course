@@ -367,13 +367,13 @@ void vector<T>::pop_back() {
     if (is_big()) {
         unique();
         tdata()[size() - 1].~T();
+        auto nsize = size() - 1;
+        new(psize_) size_t(nsize);
     } else {
         element.~T();
         delete[] psize_;
+        psize_ = nullptr;
     }
-
-    auto nsize = size() - 1;
-    new(psize_) size_t(nsize);
 }
 
 template<typename T>
