@@ -195,8 +195,11 @@ vector<T>::~vector() {
             for (size_t i = 0; i < size(); i++) {
                 tdata()[i].~T();
             }
+            big.~shared_ptr();
+        } else {
+            big.~shared_ptr();
+            delete[] (reinterpret_cast<char *>(pointer) - sizeof(size_t));
         }
-        big.~shared_ptr();
     } else if (size()) {
         small.~T();
         delete[] psize_;
@@ -366,6 +369,7 @@ void vector<T>::pop_back() {
         tdata()[size() - 1].~T();
     } else {
         element.~T();
+        delete[] psize_;
     }
 
     auto nsize = size() - 1;
@@ -502,6 +506,8 @@ void vector<T>::push_back(const T &value) {
             try {
                 new(&element) T(value);
             } catch (std::exception const &e) {
+                delete[] psize_;
+                psize_ = nullptr;
                 throw e;
             }
         } else {
@@ -632,7 +638,7 @@ void vector<T>::reserve(size_t len) {
                 for (size_t j = 0; j != i; j++) {
                     cur_tdata[j].~T();
                 }
-                delete[] cur_cdata;
+                cur_pointer->~shared_ptr();
                 throw e;
             }
         }
@@ -690,7 +696,7 @@ void vector<T>::unique() {
                 for (size_t j = 0; j != i; j++) {
                     ntdata[j].~T();
                 }
-                delete[] ncdata;
+                cur_pointer->~shared_ptr();
                 throw e;
             }
         }
@@ -710,13 +716,11 @@ template<typename T>
 vector<T>::vector(size_t size, const T &value): pointer(nullptr) {
     if (size == 1) {
         psize_ = new char[cursz];
-        if (size == 1) {
-            try {
-                new(&element) T(value);
-            } catch (std::exception const &e) {
-                delete[] psize_;
-                throw e;
-            }
+        try {
+            new(&element) T(value);
+        } catch (std::exception const &e) {
+            delete[] psize_;
+            throw e;
         }
     } else if (size > 1) {
         char *cdata = new char[align(curadd + size * sizeof(T)) + cursz];
@@ -736,7 +740,7 @@ vector<T>::vector(size_t size, const T &value): pointer(nullptr) {
                 for (size_t j = 0; j != i; j++) {
                     tdata[j].~T();
                 }
-                delete[] cdata;
+                pointer->~shared_ptr();
                 pointer = nullptr;
                 throw e;
             }
