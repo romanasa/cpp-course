@@ -157,6 +157,9 @@ void swap(vector<T> &A, vector<T> &B) {
 
 template<typename T>
 vector<T>::vector(vector const &other): pointer(nullptr) {
+    if (other.empty()) {
+        return;
+    }
     if (other.is_big()) {
         char *cdata = new char[curadd + cursz];
         new(cdata) size_t(other.size());
@@ -178,14 +181,10 @@ vector<T>::vector(vector const &other): pointer(nullptr) {
 }
 
 template<typename T>
-vector<T>::vector(): pointer(nullptr) {
-    psize_ = new char[cursz];
-    new(psize_) size_t(0);
-    new(psize_ + sizeof(size_t)) bool(false);
-}
+vector<T>::vector(): pointer(nullptr) {}
 
 template<typename T>
-vector<T>::vector(vector &&other) noexcept: psize_(nullptr), pointer(nullptr) {
+vector<T>::vector(vector &&other) noexcept: pointer(nullptr) {
     swap(other);
 }
 
@@ -198,10 +197,8 @@ vector<T>::~vector() {
             }
         }
         big.~shared_ptr();
-    } else {
-        if (size() == 1) {
-            small.~T();
-        }
+    } else if (size()) {
+        small.~T();
         delete[] psize_;
     }
 }
@@ -283,7 +280,7 @@ void vector<T>::swap(vector &other) {
 
 template<typename T>
 bool vector<T>::is_big() const noexcept {
-    return *reinterpret_cast<bool *>(psize_ + sizeof(size_t));
+    return psize_ ? *reinterpret_cast<bool *>(psize_ + sizeof(size_t)) : false;
 }
 
 template<typename T>
@@ -499,6 +496,9 @@ void vector<T>::push_back(const T &value) {
         }
     } else {
         if (size() == 0) {
+            psize_ = new char[cursz];
+            new(psize_) size_t(0);
+            new(psize_ + sizeof(size_t)) bool(false);
             try {
                 new(&element) T(value);
             } catch (std::exception const &e) {
@@ -521,7 +521,7 @@ void vector<T>::push_back(const T &value) {
 
 template<typename T>
 size_t vector<T>::size() const noexcept {
-    return *reinterpret_cast<size_t *>(psize_);
+    return psize_ ? *reinterpret_cast<size_t *>(psize_) : 0;
 }
 
 template<typename T>
@@ -708,7 +708,7 @@ void vector<T>::unique() {
 
 template<typename T>
 vector<T>::vector(size_t size, const T &value): pointer(nullptr) {
-    if (size <= 1) {
+    if (size == 1) {
         psize_ = new char[cursz];
         if (size == 1) {
             try {
@@ -718,7 +718,7 @@ vector<T>::vector(size_t size, const T &value): pointer(nullptr) {
                 throw e;
             }
         }
-    } else {
+    } else if (size > 1) {
         char *cdata = new char[align(curadd + size * sizeof(T)) + cursz];
         T *tdata = (T *) (cdata + curadd);
 
