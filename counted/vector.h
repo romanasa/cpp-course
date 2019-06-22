@@ -127,7 +127,7 @@ public:
     void insert_begin(uint cnt);
 
 private:
-    static const size_t curadd = align(sizeof(size_t) + sizeof(shared_ptr<T>));
+    static const size_t curadd = align(sizeof(size_t) + sizeof(shared_ptr<char>));
     static const size_t cursz = sizeof(size_t) + sizeof(bool);
 
     //size_t size_ = 0;
@@ -139,6 +139,7 @@ private:
         shared_ptr<char> *pointer;
     };
 
+    bool owner() const noexcept;
 
     char *cdata() const noexcept;
 
@@ -191,6 +192,7 @@ vector<T>::vector(vector &&other) noexcept: pointer(nullptr) {
 template<typename T>
 vector<T>::~vector() {
     if (is_big()) {
+
         if (big.use_count() == 1) {
             for (size_t i = 0; i < size(); i++) {
                 tdata()[i].~T();
@@ -198,8 +200,11 @@ vector<T>::~vector() {
             big.~shared_ptr();
         } else {
             big.~shared_ptr();
+        }
+        if (!owner()) {
             delete[] (reinterpret_cast<char *>(pointer) - sizeof(size_t));
         }
+
     } else if (size()) {
         small.~T();
         delete[] psize_;
@@ -232,13 +237,6 @@ vector<T> &vector<T>::operator=(vector &&other) noexcept {
 
 template<typename T>
 void vector<T>::swap(vector &other) {
-    if (is_big()) {
-        unique();
-    }
-    if (other.is_big()) {
-        other.unique();
-    }
-
     if (is_big()) {
         if (other.is_big()) {
             std::swap(pointer, other.pointer);
@@ -284,6 +282,12 @@ void vector<T>::swap(vector &other) {
 template<typename T>
 bool vector<T>::is_big() const noexcept {
     return psize_ ? *reinterpret_cast<bool *>(psize_ + sizeof(size_t)) : false;
+}
+template<typename T>
+bool vector<T>::owner() const noexcept {
+    auto x = psize_ - reinterpret_cast<char*>(pointer);
+    auto y = sizeof(shared_ptr<char>);
+    return static_cast<size_t >(x) > y;
 }
 
 template<typename T>
@@ -488,11 +492,13 @@ void vector<T>::push_back(const T &value) {
     if (is_big()) {
         unique();
         if (size() == capacity()) {
+            //auto copy(*this);
             auto tmp = value;
             reserve(2 * size());
             try {
                 new(tdata() + size()) T(tmp);
             } catch (std::exception const &e) {
+                //*this = copy;
                 throw e;
             }
         } else {
@@ -512,10 +518,12 @@ void vector<T>::push_back(const T &value) {
             }
         } else {
             auto tmp = value;
+            //auto copy(*this);
             reserve(2 * size());
             try {
                 new(tdata() + size()) T(tmp);
             } catch (std::exception const &e) {
+                //*this = copy;
                 throw e;
             }
         }
