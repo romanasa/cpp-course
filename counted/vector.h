@@ -329,6 +329,9 @@ T &vector<T>::operator[](size_t i) {
 
 template<typename T>
 void vector<T>::clear() {
+    for (size_t i = 0; i < size(); i++) {
+        tdata()[i].~T();
+    }
     new(psize_) size_t(0);
 }
 
