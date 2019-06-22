@@ -1,0 +1,29 @@
+/home/roman/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/191.7479.33/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/roman/itmo/cpp-course/list
+-- Configuring done
+CMake Error at CMakeLists.txt:10 (add_library):
+  Cannot find source file:
+
+    fault_injection.h
+
+  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .m .M .mm .h .hh .h++ .hm
+  .hpp .hxx .in .txx
+
+
+CMake Error at CMakeLists.txt:12 (add_executable):
+  Cannot find source file:
+
+    std.cpp
+
+  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .m .M .mm .h .hh .h++ .hm
+  .hpp .hxx .in .txx
+
+
+CMake Error at CMakeLists.txt:10 (add_library):
+  No SOURCES given to target: counted
+
+
+CMake Error at CMakeLists.txt:12 (add_executable):
+  No SOURCES given to target: std
+
+
+-- Build files have been written to: /home/roman/itmo/cpp-course/list/cmake-build-debug

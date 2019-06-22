@@ -1,0 +1,8 @@
+/home/roman/itmo/cpp-course/list/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/roman/itmo/cpp-course/list/cmake-build-debug/CMakeFiles/list.dir
+/home/roman/itmo/cpp-course/list/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/roman/itmo/cpp-course/list/cmake-build-debug/CMakeFiles/counted.dir
+/home/roman/itmo/cpp-course/list/cmake-build-debug/CMakeFiles/std.dir
+/home/roman/itmo/cpp-course/list/cmake-build-debug/gtest/CMakeFiles/rebuild_cache.dir
+/home/roman/itmo/cpp-course/list/cmake-build-debug/gtest/CMakeFiles/gtest.dir
+/home/roman/itmo/cpp-course/list/cmake-build-debug/gtest/CMakeFiles/edit_cache.dir
