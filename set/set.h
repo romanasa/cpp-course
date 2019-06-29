@@ -145,11 +145,11 @@ public:
 
     iterator erase(const_iterator pos);
 
-    iterator find(const value_type &val);
+    const_iterator find(const value_type &val) const;
 
-    iterator lower_bound(const value_type &val);
+    const_iterator lower_bound(const value_type &val) const;
 
-    iterator upper_bound(const value_type &val);
+    const_iterator upper_bound(const value_type &val) const;
 
     bool empty() const noexcept {
         return first == &fake;
@@ -249,7 +249,7 @@ typename set<T>::node_base *set<T>::node_base::prev() {
 }
 
 template<typename T>
-typename set<T>::iterator set<T>::find(const value_type &val)  {
+typename set<T>::const_iterator set<T>::find(const value_type &val) const {
     auto it = lower_bound(val);
     if (it != end() && *it == val) {
         return it;
@@ -258,20 +258,20 @@ typename set<T>::iterator set<T>::find(const value_type &val)  {
 }
 
 template<typename T>
-typename set<T>::iterator set<T>::lower_bound(const value_type &val) {
+typename set<T>::const_iterator set<T>::lower_bound(const value_type &val) const {
     auto cur = get_root();
     while (cur != nullptr) {
         if (eq(cur->value(), val)) {
-            return iterator(cur);
+            return const_iterator(cur);
         }
         if (val < cur->value()) {
             if (cur->left == nullptr) {
-                return iterator(cur);
+                return const_iterator(cur);
             }
             cur = cur->left;
         } else {
             if (cur->right == nullptr) {
-                return iterator(cur->next());
+                return const_iterator(cur->next());
             }
             cur = cur->right;
         }
@@ -280,7 +280,7 @@ typename set<T>::iterator set<T>::lower_bound(const value_type &val) {
 }
 
 template<typename T>
-typename set<T>::iterator set<T>::upper_bound(const value_type &val) {
+typename set<T>::const_iterator set<T>::upper_bound(const value_type &val) const {
     auto it = lower_bound(val);
     if (it != end() && eq(*it, val)) {
         ++it;
